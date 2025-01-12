@@ -11,6 +11,7 @@ export const questions: Question[] = [
     answers: [
       {
         id: 1,
+        author: "John Doe",
         body: "You can use flexbox. For example: display: flex; justify-content: center; align-items: center;",
         postedAt: new Date(Date.now() - 50000000),
         votes: 2,
@@ -27,12 +28,14 @@ export const questions: Question[] = [
     answers: [
       {
         id: 1,
+        author: "Sam Smith",
         body: "== checks for equality after type coercion, while === checks for equality without type coercion.",
         postedAt: new Date(Date.now() - 10000000),
         votes: 5,
       },
       {
         id: 2,
+        author: "Mary Jane",
         body: "Always prefer === to avoid unexpected type conversions.",
         postedAt: new Date(Date.now() - 5000000),
         votes: 3,

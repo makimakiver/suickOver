@@ -11,21 +11,23 @@ module 0x0::suickoverflow{
     use sui::balance::{Self, Balance};
     use sui::clock::{Self, Clock};
     use sui::dynamic_object_field as dof;
-    use sui::borrow::{Self};
+    use sui::object;
+    // use sui::borrow;
     // use sui::test_utils;
     //use sui::dynamic_field as df;
     
     // use sui::clock::Clock;
     // use sui::transfer;
     
-    public struct AdminUser has key{id: UID}
-
     public struct QuestionToEarn has key, store{
         id: UID,
         price: u64,
         balance: Balance<SUI>
     }
-
+    public struct Questions has key, store{
+        id: UID,
+        questions: vector<ID>
+    }
     // public struct Users has key, store{
     //     id: UID,
     //     users: u64,
@@ -98,8 +100,27 @@ module 0x0::suickoverflow{
     //         }
     //     );
     // }
+    public struct AdminBadge has key{id: UID, address: address}
     // public fun create_User_Account(users: &mut Users, name: String, desc: String, ctx: &mut TxContext){
-    
+    entry fun create_AdminBadge(ctx: &mut TxContext){
+        let adminBadge = AdminBadge {
+            id: object::new(ctx),
+            address: ctx.sender(),
+        };
+        transfer::transfer(adminBadge, ctx.sender());
+    }
+    // entry fun destroy_AdminBadge(adminBadge: &AdminBadge, _ctx: &mut TxContext){
+        
+    // }
+
+    entry fun create_QuestionPoll(_: &AdminBadge, ctx: &mut TxContext){
+        let questions = Questions {
+            id: object::new(ctx),
+            questions: vector::empty()
+        };
+        transfer::share_object(questions);
+        // transfer::public_transfer(questions, ctx.sender());
+    }
     public entry fun create_User_Account(name: String, desc: String, ctx: &mut TxContext){
         let user = User {
             id: object::new(ctx),
@@ -110,14 +131,22 @@ module 0x0::suickoverflow{
         };
         transfer::transfer(user, ctx.sender());
         // users.users = users.users + 1;
+        
+    }
+    public fun fetch_Question_Poll(questionCollection: &Questions): vector<ID>{
+        return questionCollection.questions
     }
 
+    // public fun fetch_Question(questionId: ID): Question{
+    //     let currentQuestionAddress = object::borrow_id;
+    //     return borrow_global<Question>(currentQuestionAddress)
+    // }
     // public fun fetch_User_Account(user_address: address): User{
     //     borrow_global<User>(user_address);
     // }
 
     // public entry fun create_Question(questions: &mut Questions, duration_ms: u64, user: address,title: String, desc: String, price: u64, payment: &mut Coin<SUI>, clock: &Clock, ctx: &mut TxContext){
-    public entry fun create_Question(duration_ms: u64, user: address,title: String, desc: String, price: u64, payment: &mut Coin<SUI>, clock: &Clock, ctx: &mut TxContext){
+    public entry fun create_Question(duration_ms: u64, user: address,title: String, desc: String, price: u64, payment: &mut Coin<SUI>, clock: &Clock, questionCollection: &mut Questions, ctx: &mut TxContext){
 
         assert!(price >= 0, 0);
         assert!(payment.value() >= price, 0);
@@ -144,9 +173,20 @@ module 0x0::suickoverflow{
             expiring_date: expiration_time,
             answers: vector::empty()
         };
+            // Emit the event after creating the question
+        // event::emit(QuestionCreatedEvent {
+        //     question_id: object::id(&question),
+        //     user,
+        //     title,
+        //     price,
+        //     expiration_time,
+        // });
         //dof::add(&mut question.id, b"questionToEarn", qToEarn);
+        vector::append<ID>(&mut questionCollection.questions, vector::singleton(object::id(&question)));
         transfer::transfer(question, ctx.sender());
+        // when you are adding an object and you want to transfer it to the user, you need to add the object to it first and then transfer the object to the user later.
         // questions.questions = questions.questions + 1;
+
     }
 
     // entry function is required when there is an entry point to the module.
@@ -191,6 +231,7 @@ module 0x0::suickoverflow{
             qToEarn.price = 0;
             // if it is transfer::transfer the code will not be compiled as the the transfer function needs to be public 
         }
+        
         // else{
         //     // if the question is not expired, the program will distribute the question evenly to the users whose answer go most likes.
         //     let mut answers = questionToWithdraw.answers;
@@ -199,6 +240,28 @@ module 0x0::suickoverflow{
         // }
         
     }
+
+    // public entry fun distribute_question_to_earn(user: address, questionToWithdraw: &mut Question, ctx: &mut TxContext){
+    //     // the program should only be called by the user who posted the question.
+    //     assert!(questionToWithdraw.user == user, 0);    
+    //     let mut answers = questionToWithdraw.answers;
+    //     let qToEarn = &mut questionToWithdraw.question_to_earn;
+    //     let withdrawn = balance::split(&mut qToEarn.balance, questionToWithdraw.price);
+    //     let coin = coin::from_balance(withdrawn, ctx);
+    //     if(answers.length() > 0){
+    //         let mut count = 0;
+    //         while (count < answers.length()){
+    //             let answer_address: &address = vector::borrow(&answers, count);
+    //             let answer: Answer = object::borrow<Answer>(answer_address);
+    //             let answer_coin = coin::from_balance(withdrawn, ctx);
+    //             transfer::public_transfer(answer_coin, user);
+    //             count = count + 1;
+    //         }
+    //     }
+    //     // we need to borrow the questionToEarn as it is a mutable reference. and we need to say the object in which we will get the mutable reference.
+    //     transfer::public_transfer(coin, ctx.sender());
+    //     qToEarn.price = 0;
+    // }
 
     // public fun delete_question_to_earn(question: &mut Question){
     //     // Check if the dynamic field "questionToEarn" exists

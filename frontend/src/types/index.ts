@@ -13,5 +13,6 @@ export interface Question {
     body: string;
     postedAt: Date;
     votes: number;
+    author: string;
   }
   
